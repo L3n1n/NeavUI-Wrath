@@ -336,8 +336,8 @@ f:SetScript('OnUpdate', function(self, elapsed)
             end
         end
 		
-		if (f.Rune) then
-			for i = 1, 6 do
+        if (f.Rune) then
+            for i = 1, 6 do
                 if (UnitHasVehicleUI('player')) then
                     if (f.Rune[i]:IsShown()) then
                         f.Rune[i]:Hide()
@@ -351,7 +351,7 @@ f:SetScript('OnUpdate', function(self, elapsed)
                 f.Rune[i]:SetText(CalcRuneCooldown(i))
                 f.Rune[i]:SetTextColor(SetRuneColor(i))
             end
-		end
+        end
 
         UpdateBar()
         UpdateBarVisibility()
