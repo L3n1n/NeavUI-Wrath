@@ -54,4 +54,13 @@ nPower.Config = {
     rage = {
         show = true,
     },
+	
+	rune = {
+        show = true,
+        showRuneCooldown = true,
+
+        runeFont = 'Fonts\\ARIALN.ttf',
+        runeFontSize = 16,
+        runeFontOutline = true,
+    },
 }
