@@ -22,6 +22,26 @@ MiniMapMailFrame.Text:SetPoint('BOTTOMRIGHT', MiniMapMailFrame)
 MiniMapMailFrame.Text:SetTextColor(1, 0, 1)
 MiniMapMailFrame.Text:SetText('N')
 
+   -- Modify the lfg frame
+
+MiniMapLFGFrame:ClearAllPoints()
+MiniMapLFGFrame:SetPoint('TOPLEFT', Minimap, 4, -4)
+MiniMapLFGFrame:SetSize(14, 14)
+MiniMapLFGFrame:SetHighlightTexture(nil)
+
+MiniMapLFGFrameIcon:Hide()
+MiniMapLFGFrameBorder:Hide()
+
+hooksecurefunc('EyeTemplate_StartAnimating', function(self)
+    self:SetScript('OnUpdate', nil)
+end)
+
+MiniMapLFGFrame.Text = MiniMapLFGFrame:CreateFontString(nil, 'OVERLAY')
+MiniMapLFGFrame.Text:SetFont('Fonts\\ARIALN.ttf', 15, 'OUTLINE')
+MiniMapLFGFrame.Text:SetPoint('TOP', MiniMapLFGFrame)
+MiniMapLFGFrame.Text:SetTextColor(1, 0.4, 0)
+MiniMapLFGFrame.Text:SetText('Q')
+
    -- Modify the battlefield frame
 
 MiniMapBattlefieldFrame:ClearAllPoints()
