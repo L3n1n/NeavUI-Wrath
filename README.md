@@ -10,3 +10,7 @@ Neav UI for WoW: Wrath of the Lich King Classic
 * nMinimap
 * nPower
 * nTooltip
+
+Optional:
+* oUF
+* oUF_Neav
