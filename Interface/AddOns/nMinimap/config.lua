@@ -2,6 +2,9 @@
 local _, nMinimap = ...
 
 nMinimap.Config = {
+    scale = 1.1, -- Default: 1.1
+    location = {"TOPRIGHT", UIParent, "TOPRIGHT", -26, -26}, -- Default: {"TOPRIGHT", UIParent, "TOPRIGHT", -26, -26}
+
 	tab = {
 		show = false,
 		showAlways = true,

@@ -99,13 +99,13 @@ MiniMapTracking:Hide()
 
 	-- Bigger minimap
 
-MinimapCluster:SetScale(1.1)
+MinimapCluster:SetScale(cfg.scale)
 MinimapCluster:EnableMouse(false)
 
-	-- New position
+    -- New position
 
 Minimap:ClearAllPoints()
-Minimap:SetPoint('TOPRIGHT', UIParent, -26, -26)
+Minimap:SetPoint(unpack(cfg.location))
 
     -- Square minimap and create a border
 
