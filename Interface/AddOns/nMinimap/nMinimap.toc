@@ -7,4 +7,5 @@ config.lua
 core.lua
 capture.lua
 clock.lua
+difficulty.lua
 tab.xml
