@@ -349,9 +349,6 @@ do
 	function frame:VARIABLES_LOADED()
 		-- I honestly don"t trust the load order of SVs.
 		_DB = _G[_DBNAME] or {}
-		print('---')
-		print(_DBNAME)
-		print(_DB)
 		_G[_DBNAME] = _DB
 		-- Got to catch them all!
 		for _, obj in next, oUF.objects do
