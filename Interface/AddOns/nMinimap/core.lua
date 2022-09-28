@@ -85,8 +85,6 @@ MinimapBorderTop:Hide()
 
 MinimapZoneText:Hide()
 
-GameTimeFrame:Hide()
-
 MinimapZoneTextButton:Hide()
 MinimapZoneTextButton:UnregisterAllEvents()
 
