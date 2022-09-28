@@ -46,9 +46,6 @@ TempEnchant1:ClearAllPoints()
 TempEnchant1:SetPoint('TOPRIGHT', Minimap, 'TOPLEFT', -15, 0)
 -- TempEnchant1.SetPoint = function() end
 
-TempEnchant2:ClearAllPoints()
-TempEnchant2:SetPoint('TOPRIGHT', TempEnchant1, 'TOPLEFT', -cfg.paddingX, 0)
-
 	-- Consolidated Buffs
 
 TempEnchant2:ClearAllPoints()
@@ -81,7 +78,8 @@ local function MyBuffFrame_UpdateAllBuffAnchors()
 	end
 
 	if numBuffs > 0 then
-		ConsolidatedBuffsTooltip:SetWidth(numBuffs * (buffWidth + 18))
+		-- ConsolidatedBuffsTooltip:SetWidth(numBuffs * (buffWidth + 18))
+		ConsolidatedBuffsTooltip:SetWidth(numBuffs * BUFF_BUTTON_HEIGHT)
 	end
 end
 hooksecurefunc("ConsolidatedBuffs_UpdateAllAnchors", MyBuffFrame_UpdateAllBuffAnchors)
@@ -109,9 +107,17 @@ end
 
 local function CheckFirstButton()
     if (BuffButton1) then
-		UpdateFirstButton(BuffButton1)
+		if (not BuffButton1:GetParent() == ConsolidatedBuffsTooltipBuff1) then
+            UpdateFirstButton(BuffButton1)
+		end
     end
 end
+
+hooksecurefunc('BuffFrame_UpdatePositions', function()
+    if (CONSOLIDATED_BUFF_ROW_HEIGHT ~= 26) then
+        CONSOLIDATED_BUFF_ROW_HEIGHT = 26
+    end
+end)
 
 hooksecurefunc('BuffFrame_UpdateAllBuffAnchors', function()  
     local previousBuff, aboveBuff
@@ -121,30 +127,35 @@ hooksecurefunc('BuffFrame_UpdateAllBuffAnchors', function()
     for i = 1, BUFF_ACTUAL_DISPLAY do
         local buff = _G['BuffButton'..i]
 
-		numBuffs = numBuffs + 1
-		numTotal = numTotal + 1
+        if (not buff.consolidated) then
+			numBuffs = numBuffs + 1
+			numTotal = numTotal + 1
 
-		buff:ClearAllPoints()
-		if (numBuffs == 1) then
-			UpdateFirstButton(buff)
-		elseif (numBuffs > 1 and mod(numTotal, cfg.buffPerRow) == 1) then
-			if (numTotal == cfg.buffPerRow + 1) then
-				buff:SetPoint('TOP', TempEnchant1, 'BOTTOM', 0, -cfg.paddingY)
+			buff:ClearAllPoints()
+			if (numBuffs == 1) then
+				UpdateFirstButton(buff)
+			elseif (numBuffs > 1 and mod(numTotal, cfg.buffPerRow) == 1) then
+				if (numTotal == cfg.buffPerRow + 1) then
+					buff:SetPoint('TOP', TempEnchant1, 'BOTTOM', 0, -cfg.paddingY)
+				else
+					buff:SetPoint('TOP', aboveBuff, 'BOTTOM', 0, -cfg.paddingY)
+				end
+
+				aboveBuff = buff
 			else
-				buff:SetPoint('TOP', aboveBuff, 'BOTTOM', 0, -cfg.paddingY)
+				buff:SetPoint('TOPRIGHT', previousBuff, 'TOPLEFT', -cfg.paddingX, 0)
 			end
 
-			aboveBuff = buff
-		else
-			buff:SetPoint('TOPRIGHT', previousBuff, 'TOPLEFT', -cfg.paddingX, 0)
-		end
-
-		previousBuff = buff
+			previousBuff = buff
+        end
     end
 end)
 
 hooksecurefunc('DebuffButton_UpdateAnchors', function(self, index)
     local numBuffs = BUFF_ACTUAL_DISPLAY + BuffFrame.numEnchants
+    if (ShouldShowConsolidatedBuffFrame()) then
+        numBuffs = numBuffs + 1 -- consolidated buffs
+    end
 
     local debuffSpace = cfg.buffSize + cfg.paddingY
     local numRows = ceil(numBuffs/cfg.buffPerRow)
