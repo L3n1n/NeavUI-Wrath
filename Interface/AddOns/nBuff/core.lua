@@ -41,15 +41,13 @@ SecondsToTimeAbbrev = SecondsToTimeAbbrevHook
 
 BuffFrame:SetScript('OnUpdate', nil)
 
--- TemporaryEnchantFrame ...
 TempEnchant1:ClearAllPoints()
 TempEnchant1:SetPoint('TOPRIGHT', Minimap, 'TOPLEFT', -15, 0)
--- TempEnchant1.SetPoint = function() end
-
-	-- Consolidated Buffs
 
 TempEnchant2:ClearAllPoints()
 TempEnchant2:SetPoint('TOPRIGHT', TempEnchant1, 'TOPLEFT', -cfg.paddingX, 0)
+
+	-- Consolidated Buffs
 
 ConsolidatedBuffs:SetSize(20, 20)
 ConsolidatedBuffs:ClearAllPoints()
