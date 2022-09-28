@@ -151,9 +151,9 @@ end)
 
 hooksecurefunc('DebuffButton_UpdateAnchors', function(self, index)
     local numBuffs = BUFF_ACTUAL_DISPLAY + BuffFrame.numEnchants
-    if (ShouldShowConsolidatedBuffFrame()) then
-        numBuffs = numBuffs + 1 -- consolidated buffs
-    end
+    if ( BuffFrame.numConsolidated > 0 ) then
+		numBuffs = numBuffs - BuffFrame.numConsolidated + 1;
+	end
 
     local debuffSpace = cfg.buffSize + cfg.paddingY
     local numRows = ceil(numBuffs/cfg.buffPerRow)
