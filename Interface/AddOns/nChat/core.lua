@@ -55,7 +55,7 @@ _G.CHAT_BATTLEGROUND_LEADER_GET = "(|Hchannel:Battleground|hBL|h) %s:\32"
 _G.CHAT_INSTANCE_CHAT_GET = "|Hchannel:INSTANCE_CHAT|h[I]|h %s:\32"
 _G.CHAT_INSTANCE_CHAT_LEADER_GET = "|Hchannel:INSTANCE_CHAT|h[IL]|h %s:\32"
 
-local AddMessage = ChatFrame1.AddMessage
+local origs = {}
 local function FCF_AddMessage(self, text, ...)
     if type(text) == "string" then
         text = gsub(text, "(|HBNplayer.-|h)%[(.-)%]|h", "%1%2|h")
@@ -63,7 +63,7 @@ local function FCF_AddMessage(self, text, ...)
         text = gsub(text, "%[(%d0?)%. (.-)%]", "(%1)")
     end
 
-    return AddMessage(self, text, ...)
+	return origs[self](self, text, ...)
 end
 
     -- Voice Chat Buttons
@@ -249,6 +249,7 @@ local function ModChat(self)
 	chat:SetMinResize(150, 25)
 
 	if self ~= "ChatFrame2" then
+        origs[chat] = chat.AddMessage
 		chat.AddMessage = FCF_AddMessage
 	end
 
