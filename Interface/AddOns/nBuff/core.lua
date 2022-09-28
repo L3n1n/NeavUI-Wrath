@@ -49,6 +49,43 @@ TempEnchant1:SetPoint('TOPRIGHT', Minimap, 'TOPLEFT', -15, 0)
 TempEnchant2:ClearAllPoints()
 TempEnchant2:SetPoint('TOPRIGHT', TempEnchant1, 'TOPLEFT', -cfg.paddingX, 0)
 
+	-- Consolidated Buffs
+
+TempEnchant2:ClearAllPoints()
+TempEnchant2:SetPoint('TOPRIGHT', TempEnchant1, 'TOPLEFT', -cfg.paddingX, 0)
+
+ConsolidatedBuffs:SetSize(20, 20)
+ConsolidatedBuffs:ClearAllPoints()
+ConsolidatedBuffs:SetPoint('BOTTOM', TempEnchant1, 'TOP', 1, 2)
+ConsolidatedBuffsIcon:SetAlpha(0)
+
+ConsolidatedBuffsCount:ClearAllPoints()
+ConsolidatedBuffsCount:SetPoint('CENTER', ConsolidatedBuffsIcon, 0, 1)
+ConsolidatedBuffsCount:SetFont('Fonts\\ARIALN.ttf', cfg.buffFontSize+2, 'THINOUTLINE')
+ConsolidatedBuffsCount:SetShadowOffset(0, 0)
+
+-- ConsolidatedBuffsTooltip:SetScale(1.2)
+
+local function MyBuffFrame_UpdateAllBuffAnchors()
+	local numBuffs = 0;
+	local buffWidth = 0
+
+	for i = 1, BUFF_ACTUAL_DISPLAY do
+		buff = _G["BuffButton"..i];
+		if buff.consolidated then
+			numBuffs = numBuffs + 1
+			if buffWidth == 0 then
+				buffWidth = buff:GetWidth()
+			end
+		end
+	end
+
+	if numBuffs > 0 then
+		ConsolidatedBuffsTooltip:SetWidth(numBuffs * (buffWidth + 18))
+	end
+end
+hooksecurefunc("ConsolidatedBuffs_UpdateAllAnchors", MyBuffFrame_UpdateAllBuffAnchors)
+
 local function UpdateFirstButton(self)
     if (self and self:IsShown()) then
         self:ClearAllPoints()
