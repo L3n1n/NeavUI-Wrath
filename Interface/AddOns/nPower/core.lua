@@ -2,360 +2,420 @@
 local _, nPower = ...
 local config = nPower.Config
 
-local ComboColor = config.energy.comboColor
-local playerClass = select(2, UnitClass('player'))
-
-local RuneColor = {
-    [1] = {r = 0.7, g = 0.1, b = 0.1},
-    [2] = {r = 0.7, g = 0.1, b = 0.1},
-    [3] = {r = 0.4, g = 0.8, b = 0.2},
-    [4] = {r = 0.4, g = 0.8, b = 0.2},
-    [5] = {r = 0.0, g = 0.6, b = 0.8},
-    [6] = {r = 0.0, g = 0.6, b = 0.8},
-}
-
-local f = CreateFrame('Frame', nil, UIParent)
-f:SetScale(1.4)
-f:SetSize(18, 18)
-f:SetPoint(unpack(config.position))
-f:EnableMouse(false)
-
-f:RegisterEvent("PLAYER_REGEN_ENABLED")
-f:RegisterEvent("PLAYER_REGEN_DISABLED")
-f:RegisterEvent("PLAYER_ENTERING_WORLD")
-f:RegisterEvent("PLAYER_TARGET_CHANGED")
-f:RegisterEvent("UPDATE_SHAPESHIFT_FORM")
-f:RegisterUnitEvent("UNIT_DISPLAYPOWER", "player")
-f:RegisterUnitEvent("UNIT_POWER_UPDATE", "player")
-f:RegisterUnitEvent("UNIT_POWER_FREQUENT", "player")
-
-if (config.rune.showRuneCooldown) then
-    f:RegisterEvent('RUNE_TYPE_UPDATE')
+local function GetHPPercentage()
+    local currentHP = UnitHealth("player")
+    local maxHP = UnitHealthMax("player")
+    return math.floor(100*currentHP/maxHP)
 end
 
-if (config.energy.showComboPoints) then
-    f.ComboPoints = {}
+local function CalcRuneCooldown(num)
+    local start, duration, runeReady = GetRuneCooldown(num)
 
-    for i = 1, 5 do
-        f.ComboPoints[i] = f:CreateFontString(nil, 'ARTWORK')
-        
-        if (config.energy.comboFontOutline) then
-            f.ComboPoints[i]:SetFont(config.energy.comboFont, config.energy.comboFontSize, 'THINOUTLINE')
-            f.ComboPoints[i]:SetShadowOffset(0, 0)
-        else
-            f.ComboPoints[i]:SetFont(config.energy.comboFont, config.energy.comboFontSize)
-            f.ComboPoints[i]:SetShadowOffset(1, -1)
-        end
-        
-        f.ComboPoints[i]:SetParent(f)
-        f.ComboPoints[i]:SetText(i)
-        f.ComboPoints[i]:SetAlpha(0)
+    -- Sometimes GetRuneCooldown returns nil for some reason.
+    if not start then
+        return
     end
 
-    f.ComboPoints[1]:SetPoint('CENTER', -52, 0)
-    f.ComboPoints[2]:SetPoint('CENTER', -26, 0)
-    f.ComboPoints[3]:SetPoint('CENTER', 0, 0)
-    f.ComboPoints[4]:SetPoint('CENTER', 26, 0)
-    f.ComboPoints[5]:SetPoint('CENTER', 52, 0)
-end
+    local time = floor(GetTime() - start)
+    local cooldown = ceil(duration - time)
 
-if (playerClass == 'WARLOCK' and config.showSoulshards or playerClass == 'PALADIN' and config.showHolypower) then
-    f.extraPoints = f:CreateFontString(nil, 'ARTWORK')
-    
-    if (config.extraFontOutline) then
-        f.extraPoints:SetFont(config.extraFont, config.extraFontSize, 'THINOUTLINE')
-        f.extraPoints:SetShadowOffset(0, 0)
-    else
-        f.extraPoints:SetFont(config.extraFont, config.extraFontSize)
-        f.extraPoints:SetShadowOffset(1, -1)
-    end
-
-    f.extraPoints:SetParent(f)
-    f.extraPoints:SetPoint('CENTER', 0, 0)
-end
-
-if (playerClass == 'DEATHKNIGHT' and config.rune.showRuneCooldown) then
-    for i = 1, 6 do
-        RuneFrame:UnregisterAllEvents()
-        _G['Rune'..i]:Hide()
-    end
-
-    f.Rune = {}
-
-    for i = 1, 6 do
-        f.Rune[i] = f:CreateFontString(nil, 'ARTWORK')
-
-        if (config.rune.runeFontOutline) then
-            f.Rune[i]:SetFont(config.rune.runeFont, config.rune.runeFontSize, 'THINOUTLINE')
-            f.Rune[i]:SetShadowOffset(0, 0)
-        else
-            f.Rune[i]:SetFont(config.rune.runeFont, config.rune.runeFontSize)
-            f.Rune[i]:SetShadowOffset(1, -1)
-        end
-
-        f.Rune[i]:SetShadowOffset(0, 0)
-        f.Rune[i]:SetParent(f)
-    end
-
-    f.Rune[1]:SetPoint('CENTER', -65, 0)
-    f.Rune[2]:SetPoint('CENTER', -39, 0)
-    f.Rune[3]:SetPoint('CENTER', 39, 0)
-    f.Rune[4]:SetPoint('CENTER', 65, 0)
-    f.Rune[5]:SetPoint('CENTER', -13, 0)
-    f.Rune[6]:SetPoint('CENTER', 13, 0)
-end
-
-f.Power = CreateFrame('StatusBar', nil, UIParent)
-f.Power:SetScale(config.scale)
-f.Power:SetSize(config.sizeWidth, 3)
-f.Power:SetPoint('CENTER', f, 0, -23)
-f.Power:SetStatusBarTexture('Interface\\AddOns\\nPower\\media\\statusbarTexture')
-f.Power:SetAlpha(0)
-
-f.Power.Value = f.Power:CreateFontString(nil, 'ARTWORK')
-
-if (config.valueFontOutline) then
-    f.Power.Value:SetFont(config.valueFont, config.valueFontSize, 'THINOUTLINE')
-    f.Power.Value:SetShadowOffset(0, 0)
-else
-    f.Power.Value:SetFont(config.valueFont, config.valueFontSize)
-    f.Power.Value:SetShadowOffset(1, -1)
-end
-
-f.Power.Value:SetPoint('CENTER', f.Power, 0, config.valueFontAdjustmentX)
-f.Power.Value:SetVertexColor(1, 1, 1)
-
-f.Power.Background = f.Power:CreateTexture(nil, 'BACKGROUND')
-f.Power.Background:SetAllPoints(f.Power)
-f.Power.Background:SetTexture('Interface\\AddOns\\nPower\\media\\statusbarTexture')
-f.Power.Background:SetVertexColor(0.25, 0.25, 0.25, 1)
-
-f.Power.BackgroundShadow = CreateFrame('Frame', nil, f.Power)
-f.Power.BackgroundShadow:SetFrameStrata('BACKGROUND')
-f.Power.BackgroundShadow:SetPoint('TOPLEFT', -4, 4)
-f.Power.BackgroundShadow:SetPoint('BOTTOMRIGHT', 4, -4)
-Mixin(f.Power.BackgroundShadow, BackdropTemplateMixin)
-f.Power.BackgroundShadow:SetBackdrop({
-    BgFile = 'Interface\\ChatFrame\\ChatFrameBackground',
-    edgeFile = 'Interface\\Addons\\nPower\\media\\textureGlow', edgeSize = 4,
-    insets = {left = 3, right = 3, top = 3, bottom = 3}
-})
-f.Power.BackgroundShadow:SetBackdropColor(0.15, 0.15, 0.15, 1)
-f.Power.BackgroundShadow:SetBackdropBorderColor(0, 0, 0)
-
-f.Power.Below = f.Power:CreateTexture(nil, 'BACKGROUND')
-f.Power.Below:SetHeight(14)
-f.Power.Below:SetWidth(14)
-f.Power.Below:SetTexture('Interface\\AddOns\\nPower\\media\\textureArrowBelow')
-
-f.Power.Above = f.Power:CreateTexture(nil, 'BACKGROUND')
-f.Power.Above:SetHeight(14)
-f.Power.Above:SetWidth(14)
-f.Power.Above:SetTexture('Interface\\AddOns\\nPower\\media\\textureArrowAbove')
-f.Power.Above:SetPoint('BOTTOM', f.Power.Below, 'TOP', 0, f.Power:GetHeight())
-
-if (config.showCombatRegen) then
-    f.mpreg = f.Power:CreateFontString(nil, 'ARTWORK')
-    f.mpreg:SetFont(config.valueFont, 12, 'THINOUTLINE')
-    f.mpreg:SetShadowOffset(0, 0)
-    f.mpreg:SetPoint('TOP', f.Power.Below, 'BOTTOM', 0, 4)
-    f.mpreg:SetParent(f.Power)
-    f.mpreg:Show()
-end
-
-local function FormatValue(self)
-    if (self >= 10000) then
-        return ('%.1fk'):format(self / 1e3)
-    else
-        return self
+    if runeReady or UnitIsDeadOrGhost("player") then
+        return "#"
+    elseif not UnitIsDeadOrGhost("player") and cooldown then
+        return cooldown
     end
 end
 
 local function GetRealMpFive()
     local _, activeRegen = GetPowerRegen()
     local realRegen = activeRegen * 5
-    local _, powerType = UnitPowerType('player')
+    local _, powerType = UnitPowerType("player")
 
-    if (powerType == 'MANA') then
-        return math.floor(realRegen)
+    if (powerType == "MANA") then
+        -- return math.floor(realRegen)
+        return math.ceil(realRegen) -- better for low levels
     else
-        return ''
+        return ""
     end
 end
 
-local function SetComboColor(i)
-    local comboPoints = GetComboPoints('player', 'target') or 0
+local function HolyPowerCheck(num)
+    local curPower = UnitPower("player", Enum.PowerType.HolyPower)
+    return num <= curPower and "|cffFFFF00#|r" or "|cffC0C0C0-|r"
+end
 
-    if (i > comboPoints or UnitIsDeadOrGhost('target')) then
+local function SetPowerColor(self)
+    local powerType
+    if (self.class == "ROGUE" or self.class == "DRUID") then
+        powerType = Enum.PowerType.ComboPoints
+    elseif (self.class == "MAGE") then
+        powerType = Enum.PowerType.ArcaneCharges
+    elseif (self.class == "PALADIN") then
+        powerType = Enum.PowerType.HolyPower
+    elseif (self.class == "WARLOCK") then
+        powerType = Enum.PowerType.SoulShards
+    end
+
+    local currentPower = UnitPower("player", powerType)
+    local maxPower = UnitPowerMax("player", powerType)
+
+    if (UnitIsDeadOrGhost("target")) then
         return 1, 1, 1
+    elseif (currentPower == maxPower-1) then
+        return 0.9, 0.7, 0.0
+    elseif (currentPower == maxPower) then
+        return 1, 0, 0
     else
-        return ComboColor[i].r, ComboColor[i].g, ComboColor[i].b
+        return 1, 1, 1
     end
 end
 
-local function SetComboAlpha(i)
-    local comboPoints = GetComboPoints('player', 'target') or 0
-
-    if (i == comboPoints) then
-        return 1
+local function UpdateArrow(self)
+    if (UnitPower("player") == 0) then
+        self.Power.Below:SetAlpha(0.3)
+        self.Power.Above:SetAlpha(0.3)
     else
-        return 0
-    end
-end
-
-local function CalcRuneCooldown(self)
-    local start, duration, runeReady = GetRuneCooldown(self)
-    local time = floor(GetTime() - start)
-    local cooldown = ceil(duration - time)
-
-    if (runeReady or UnitIsDeadOrGhost('player')) then
-        return '#'
-    elseif (not UnitIsDeadOrGhost('player') and cooldown) then
-        return cooldown
-    end
-end
-
-local function SetRuneColor(i)
-    if (f.Rune[i].type == 4) then
-        return 1, 0, 1
-    else
-        return RuneColor[i].r, RuneColor[i].g, RuneColor[i].b
-    end
-end
-
-local function UpdateBarVisibility()
-    local _, powerType = UnitPowerType('player')
-
-    if ((not config.energy.show and powerType == 'ENERGY') or (not config.focus.show and powerType == 'FOCUS') or (not config.rage.show and powerType == 'RAGE') or (not config.mana.show and powerType == 'MANA') or UnitIsDeadOrGhost('player')) then
-        f.Power:SetAlpha(0)
-    elseif (InCombatLockdown()) then
-        securecall('UIFrameFadeIn', f.Power, 0.3, f.Power:GetAlpha(), config.activeAlpha)
-    elseif (not InCombatLockdown() and UnitPower('player') > 0) then
-        securecall('UIFrameFadeOut', f.Power, 0.3, f.Power:GetAlpha(), config.inactiveAlpha)
-    else
-        securecall('UIFrameFadeOut', f.Power, 0.3, f.Power:GetAlpha(), config.emptyAlpha)
-    end
-end
-
-local function UpdateArrow()
-    if (UnitPower('player') == 0) then
-        f.Power.Below:SetAlpha(0.3)
-        f.Power.Above:SetAlpha(0.3)
-    else
-        f.Power.Below:SetAlpha(1)
-        f.Power.Above:SetAlpha(1)
+        self.Power.Below:SetAlpha(1)
+        self.Power.Above:SetAlpha(1)
     end
 
-    local newPosition = UnitPower('player') / UnitPowerMax('player') * f.Power:GetWidth()
-    f.Power.Below:SetPoint('TOP', f.Power, 'BOTTOMLEFT', newPosition, 0)
+    local newPosition = UnitPower("player") / UnitPowerMax("player") * self.Power:GetWidth()
+    self.Power.Below:SetPoint("TOP", self.Power, "BOTTOMLEFT", newPosition, 0)
 end
 
-local function UpdateBarValue()
-    local min = UnitPower('player')
-	f.Power:SetMinMaxValues(0, UnitPowerMax('player'))
-    f.Power:SetValue(min)
+local function UpdateBarValue(self)
+    local min = UnitPower("player")
+    self.Power:SetMinMaxValues(0, UnitPowerMax("player"))
+    self.Power:SetValue(min)
 
     if (config.valueAbbrev) then
-        f.Power.Value:SetText(min > 0 and FormatValue(min) or '')
+        self.Power.Value:SetText(min > 0 and nPower:FormatValue(min) or "")
     else
-        f.Power.Value:SetText(min > 0 and min or '')
+        self.Power.Value:SetText(min > 0 and min or "")
     end
 end
 
-local function UpdateBarColor()
-    local _, powerType, altR, altG, altB = UnitPowerType('player')
-    local unitPower = PowerBarColor[powerType]
+local function UpdateBarColor(self)
+    local _, powerToken, altR, altG, altB = UnitPowerType("player")
+    local unitPower = PowerBarColor[powerToken]
 
     if (unitPower) then
-        f.Power:SetStatusBarColor(unitPower.r, unitPower.g, unitPower.b)
+        if (powerToken == "MANA") then
+            self.Power:SetStatusBarColor(0.0, 0.55, 1.0)
+        else
+            self.Power:SetStatusBarColor(unitPower.r, unitPower.g, unitPower.b)
+        end
     else
-        f.Power:SetStatusBarColor(altR, altG, altB)
+        self.Power:SetStatusBarColor(altR, altG, altB)
     end
 end
 
-local function UpdateBar()
-    UpdateBarColor()
-    UpdateBarValue()
-    UpdateArrow()
+local function UpdateBarVisibility(self)
+    local _, powerToken = UnitPowerType("player")
+    local newAlpha = nil
+
+    if (not config.showPowerType[powerToken] or UnitIsDeadOrGhost("player")) then
+        self.Power:SetAlpha(0)
+    elseif (InCombatLockdown()) then
+        newAlpha = config.activeAlpha
+    elseif (not InCombatLockdown() and UnitPower("player") > 0) then
+        newAlpha = config.inactiveAlpha
+    else
+        newAlpha = config.emptyAlpha
+    end
+
+    if (newAlpha) then
+        nPower:Fade(self.Power, 0.3, self.Power:GetAlpha(), newAlpha)
+    end
 end
 
-f:SetScript('OnEvent', function(self, event, arg1)
-    if (self.ComboPoints) then
-        if (event == 'UNIT_POWER_UPDATE' or event == 'PLAYER_TARGET_CHANGED') then
-            for i = 1, 5 do
-                self.ComboPoints[i]:SetTextColor(SetComboColor(i))
-                self.ComboPoints[i]:SetAlpha(SetComboAlpha(i))
+local function RuneUpdate(self, elapsed)
+    self.updateTimer = self.updateTimer + elapsed
+
+    if (self.updateTimer > 0.1) then
+        for i = 1, 6 do
+            if (UnitHasVehicleUI("player")) then
+                if (self.Rune[i]:IsShown()) then
+                    self.Rune[i]:Hide()
+                end
+            else
+                if (not self.Rune[i]:IsShown()) then
+                    self.Rune[i]:Show()
+                end
+            end
+
+            self.Rune[i]:SetText(CalcRuneCooldown(i))
+            self.Rune[i]:SetTextColor(0.0, 0.6, 0.8)
+        end
+
+        self.updateTimer = 0
+    end
+end
+
+local function HolyPowerUpdate(self, elapsed)
+    if self.spec ~= SPEC_PALADIN_RETRIBUTION then
+        for i = 1, 5 do
+            self.Rune[i]:Hide()
+        end
+        return
+    end
+
+    self.updateTimer = self.updateTimer + elapsed
+
+    if (self.updateTimer > 0.1) then
+        for i = 1, 5 do
+            if (UnitHasVehicleUI("player")) then
+                if (self.Rune[i]:IsShown()) then
+                    self.Rune[i]:Hide()
+                end
+            else
+                if (not self.Rune[i]:IsShown()) then
+                    self.Rune[i]:Show()
+                end
+            end
+
+            self.Rune[i]:SetText(HolyPowerCheck(i))
+        end
+
+        self.updateTimer = 0
+    end
+end
+
+function nPower_OnLoad(self)
+    self.updateTimer = 0
+    self.class = select(2, UnitClass("player"))
+
+    self:SetScale(config.scale)
+    self:SetSize(18, 18)
+    self:SetPoint(unpack(config.position))
+    self:EnableMouse(false)
+
+    self:RegisterEvent("PLAYER_REGEN_ENABLED")
+    self:RegisterEvent("PLAYER_REGEN_DISABLED")
+    self:RegisterEvent("PLAYER_ENTERING_WORLD")
+    self:RegisterEvent("PLAYER_TARGET_CHANGED")
+    self:RegisterEvent("UPDATE_SHAPESHIFT_FORM")
+    self:RegisterUnitEvent("UNIT_DISPLAYPOWER", "player")
+    self:RegisterUnitEvent("UNIT_POWER_UPDATE", "player")
+    self:RegisterUnitEvent("UNIT_POWER_FREQUENT", "player")
+
+    if (config.hp.show) then
+        self:RegisterUnitEvent("UNIT_HEALTH", "player")
+        self:RegisterUnitEvent("UNIT_MAXHEALTH", "player")
+        nPower.SetupHealth(self)
+    end
+
+    nPower:SetupPower(self)
+
+    if nPower:HasExtraPoints(self.class) then
+        nPower:SetupExtraPoints(self)
+    end
+	
+	if (self.class == "DEATHKNIGHT" and config.showRunes) then
+        nPower.SetupRunes(self)
+    end
+	
+	if (self.class == "PALADIN" and config.holyPower.showRunes) then
+        nPower.SetupHolyPower(self)
+    end
+end
+
+function nPower_OnEvent(self, event, ...)
+    if (self.extraPoints) then
+        if (UnitHasVehicleUI("player")) then
+            if (self.extraPoints:IsShown()) then
+                self.extraPoints:Hide()
+            end
+        else
+            local nump
+            if (self.class == "PALADIN") then
+                nump = UnitPower("player", Enum.PowerType.HolyPower)
+            elseif (self.class == "ROGUE" or self.class == "DRUID") then
+                -- nump = UnitPower("player", Enum.PowerType.ComboPoints)
+				nump = GetComboPoints('player', 'target')
+            elseif (self.class == "MAGE") then
+                nump = UnitPower("player", Enum.PowerType.ArcaneCharges)
+            end
+
+            self.extraPoints:SetTextColor(SetPowerColor(self))
+            self.extraPoints:SetText(nump == 0 and "" or nump)
+
+            if (not self.extraPoints:IsShown()) then
+                self.extraPoints:Show()
+            end
+
+            nPower.UpdateHealthTextLocation(self, nump)
+        end
+    end
+
+	if (self.HPText) then
+        if (UnitHasVehicleUI("player")) then
+            if (self.HPText:IsShown()) then
+                self.HPText:Hide()
+            end
+        else
+            self.HPText:SetTextColor(unpack(config.hp.hpFontColor))
+            self.HPText:SetText(GetHPPercentage())
+
+            if (not self.HPText:IsShown()) then
+                self.HPText:Show()
             end
         end
     end
 	
-	if (event == 'RUNE_TYPE_UPDATE' and config.rune.showRuneCooldown) then
-        f.Rune[arg1].type = GetRuneType(arg1)
+    if (self.mpreg) then
+        self.mpreg:SetText(GetRealMpFive())
     end
 
-    if (event == 'PLAYER_ENTERING_WORLD') then
-        if (InCombatLockdown()) then
-            securecall('UIFrameFadeIn', self, 0.35, self:GetAlpha(), 1)
+    UpdateArrow(self)
+    UpdateBarValue(self)
+    UpdateBarColor(self)
+    UpdateBarVisibility(self)
+
+    if (event == "PLAYER_ENTERING_WORLD") then
+		if (InCombatLockdown()) then
+			securecall("UIFrameFadeIn", self, 0.35, self:GetAlpha(), 1)
+		else
+			securecall("UIFrameFadeOut", self, 0.35, self:GetAlpha(), config.inactiveAlpha)
+		end
+		elseif (event == "PLAYER_REGEN_DISABLED") then
+			securecall("UIFrameFadeIn", self, 0.35, self:GetAlpha(), 1)
+		elseif (event == "PLAYER_REGEN_ENABLED") then
+			securecall("UIFrameFadeOut", self, 0.35, self:GetAlpha(), config.inactiveAlpha)
+		elseif (event == "PLAYER_LEVEL_UP") then
+			local level = ...
+			if level >= PALADINPOWERBAR_SHOW_LEVEL then
+				self:UnregisterEvent("PLAYER_LEVEL_UP")
+				nPower.SetupHolyPower(self)
+			end
+		elseif (event == "PLAYER_TALENT_UPDATE") then
+			self.spec = GetSpecialization()
+
+			nPower.UpdateHealthTextLocation(self)
+    end
+end
+
+function nPower.SetupHealth(self)
+    self.HPText = self:CreateFontString(nil, "ARTWORK")
+    if (config.hp.hpFontOutline) then
+        self.HPText:SetFont(config.hp.hpFont, config.hp.hpFontSize, "THINOUTLINE")
+        self.HPText:SetShadowOffset(0, 0)
+    else
+        self.HPText:SetFont(config.hp.hpFont, config.hp.hpFontSize)
+        self.HPText:SetShadowOffset(1, -1)
+    end
+    self.HPText:SetParent(self)
+    nPower.UpdateHealthTextLocation(self)
+end
+
+function nPower:SetupPower(self)
+    self.Power = CreateFrame("StatusBar", nil, UIParent)
+    self.Power:SetScale(self:GetScale())
+    self.Power:SetSize(config.sizeWidth, 3)
+    self.Power:SetPoint("CENTER", self, 0, -23)
+    self.Power:SetStatusBarTexture([[Interface\AddOns\nPower\media\statusbarTexture]])
+    self.Power:SetAlpha(0)
+
+    self.Power.Value = self.Power:CreateFontString(nil, "ARTWORK")
+
+    if (config.valueFontOutline) then
+        self.Power.Value:SetFont(config.valueFont, config.valueFontSize, "THINOUTLINE")
+        self.Power.Value:SetShadowOffset(0, 0)
+    else
+        self.Power.Value:SetFont(config.valueFont, config.valueFontSize)
+        self.Power.Value:SetShadowOffset(1, -1)
+    end
+
+    self.Power.Value:SetPoint("CENTER", self.Power, 0, config.valueFontAdjustmentX)
+    self.Power.Value:SetVertexColor(1, 1, 1)
+
+    self.Power.Background = self.Power:CreateTexture(nil, "BACKGROUND")
+    self.Power.Background:SetAllPoints(self.Power)
+    self.Power.Background:SetTexture([[Interface\AddOns\nPower\media\statusbarTexture]])
+    self.Power.Background:SetVertexColor(0.25, 0.25, 0.25, 1)
+
+    self.Power.BackgroundShadow = CreateFrame("Frame", nil, self.Power)
+    self.Power.BackgroundShadow:SetFrameStrata("BACKGROUND")
+    self.Power.BackgroundShadow:SetPoint("TOPLEFT", -4, 4)
+    self.Power.BackgroundShadow:SetPoint("BOTTOMRIGHT", 4, -4)
+	Mixin(self.Power.BackgroundShadow, BackdropTemplateMixin)
+    self.Power.BackgroundShadow:SetBackdrop({
+        BgFile = [[Interface\ChatFrame\ChatFrameBackground]],
+        edgeFile = [[Interface\Addons\nPower\\media\textureGlow]], edgeSize = 4,
+        insets = {left = 3, right = 3, top = 3, bottom = 3}
+    })
+    self.Power.BackgroundShadow:SetBackdropColor(0.15, 0.15, 0.15, 1)
+    self.Power.BackgroundShadow:SetBackdropBorderColor(0, 0, 0)
+
+    self.Power.Below = self.Power:CreateTexture(nil, "BACKGROUND")
+    self.Power.Below:SetHeight(14)
+    self.Power.Below:SetWidth(14)
+    self.Power.Below:SetTexture([[Interface\AddOns\nPower\media\textureArrowBelow]])
+
+    self.Power.Above = self.Power:CreateTexture(nil, "BACKGROUND")
+    self.Power.Above:SetHeight(14)
+    self.Power.Above:SetWidth(14)
+    self.Power.Above:SetTexture([[Interface\AddOns\nPower\media\textureArrowAbove]])
+    self.Power.Above:SetPoint("BOTTOM", self.Power.Below, "TOP", 0, self.Power:GetHeight())
+
+    if (config.showCombatRegen) then
+        self.mpreg = self.Power:CreateFontString(nil, "ARTWORK")
+        self.mpreg:SetFont(config.valueFont, 12, "THINOUTLINE")
+        self.mpreg:SetShadowOffset(0, 0)
+        self.mpreg:SetPoint("TOP", self.Power.Below, "BOTTOM", 0, 4)
+        self.mpreg:SetParent(self.Power)
+        self.mpreg:Show()
+    end
+end
+
+function nPower:SetupExtraPoints(self)
+    self.extraPoints = self:CreateFontString(nil, "ARTWORK")
+
+    if (config.extraFontOutline) then
+        self.extraPoints:SetFont(config.extraFont, config.extraFontSize, "THINOUTLINE")
+        self.extraPoints:SetShadowOffset(0, 0)
+    else
+        self.extraPoints:SetFont(config.extraFont, config.extraFontSize)
+        self.extraPoints:SetShadowOffset(1, -1)
+    end
+
+    self.extraPoints:SetParent(self)
+    self.extraPoints:SetPoint("CENTER", 0, 0)
+end
+
+function nPower.SetupRunes(self)
+    self.Rune = {}
+
+    for i = 1, 6 do
+        self.Rune[i] = self:CreateFontString(nil, "ARTWORK")
+        self.Rune[i]:SetParent(self)
+
+        if (config.rune.runeFontOutline) then
+            self.Rune[i]:SetFont(config.rune.runeFont, config.rune.runeFontSize, "THINOUTLINE")
+            self.Rune[i]:SetShadowOffset(0, 0)
         else
-            securecall('UIFrameFadeOut', self, 0.35, self:GetAlpha(), config.inactiveAlpha)
-        end
-    end
-
-    if (event == 'PLAYER_REGEN_DISABLED') then
-        securecall('UIFrameFadeIn', self, 0.35, self:GetAlpha(), 1)
-    end
-    
-    if (event == 'PLAYER_REGEN_ENABLED') then
-        securecall('UIFrameFadeOut', self, 0.35, self:GetAlpha(), config.inactiveAlpha)
-    end
-end)
-
-local updateTimer = 0
-f:SetScript('OnUpdate', function(self, elapsed)
-    updateTimer = updateTimer + elapsed
-
-    if (updateTimer > 0.1) then
-        if (f.mpreg) then
-            f.mpreg:SetText(GetRealMpFive())
+            self.Rune[i]:SetFont(config.rune.runeFont, config.rune.runeFontSize)
+            self.Rune[i]:SetShadowOffset(1, -1)
         end
 
-        if (f.extraPoints) then
-            if (UnitHasVehicleUI('player')) then
-                if (f.extraPoints:IsShown()) then
-                    f.extraPoints:Hide()
-                end
-            else
-                local nump
-                if (playerClass == 'WARLOCK') then
-                    nump = UnitPower('player', SPELL_POWER_SOUL_SHARDS)
-                elseif (playerClass == 'PALADIN') then
-                    nump = UnitPower('player', SPELL_POWER_HOLY_POWER)
-                end
-                
-                f.extraPoints:SetText(nump == 0 and '' or nump)
-            end
-        end
-		
-        if (f.Rune) then
-            for i = 1, 6 do
-                if (UnitHasVehicleUI('player')) then
-                    if (f.Rune[i]:IsShown()) then
-                        f.Rune[i]:Hide()
-                    end
-                else
-                    if (not f.Rune[i]:IsShown()) then
-                        f.Rune[i]:Show()
-                    end
-                end
-
-                f.Rune[i]:SetText(CalcRuneCooldown(i))
-                f.Rune[i]:SetTextColor(SetRuneColor(i))
-            end
-        end
-
-        UpdateBar()
-        UpdateBarVisibility()
-
-        updateTimer = 0
+        self.Rune[i]:SetJustifyV("MIDDLE")
+        self.Rune[i]:SetJustifyH("CENTER")
+        self.Rune[i]:SetWidth(config.rune.runeFontSize*1.2)
     end
-end)
+
+    -- Left Side
+    self.Rune[3]:SetPoint("RIGHT", self, "CENTER", -2, 2)
+    self.Rune[2]:SetPoint("RIGHT", self.Rune[3], "LEFT", -2, 0)
+    self.Rune[1]:SetPoint("RIGHT", self.Rune[2], "LEFT", -2, 0)
+
+    --Right Side
+    self.Rune[4]:SetPoint("LEFT", self, "CENTER", 2, 2)
+    self.Rune[5]:SetPoint("LEFT", self.Rune[4], "RIGHT", 2, 0)
+    self.Rune[6]:SetPoint("LEFT", self.Rune[5], "RIGHT", 2, 0)
+
+    self:SetScript("OnUpdate", RuneUpdate)
+
+    if (self.HPText) then
+        nPower.UpdateHealthTextLocation(self)
+    end
+end
