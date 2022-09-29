@@ -79,7 +79,8 @@ if not cfg.enableVoiceChatButtons then
         frame:UnregisterAllEvents()
     end
 else
-	ChatFrameChannelButton:SetPoint('BOTTOMLEFT', ChatFrame1, 'TOPLEFT', -30, 30)
+    ChatFrameChannelButton:SetPoint('BOTTOMLEFT', ChatFrame1, 'TOPLEFT', -30, 30)
+    TextToSpeechButtonFrame:SetPoint('BOTTOMLEFT', ChatFrameChannelButton, 'TOPLEFT', 0, 0)
 end
 
     -- Hide the menu.

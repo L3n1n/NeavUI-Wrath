@@ -62,23 +62,18 @@ ConsolidatedBuffsCount:SetShadowOffset(0, 0)
 -- ConsolidatedBuffsTooltip:SetScale(1.2)
 
 local function MyBuffFrame_UpdateAllBuffAnchors()
-	local numBuffs = 0;
-	local buffWidth = 0
+    local numBuffs = 0;
 
-	for i = 1, BUFF_ACTUAL_DISPLAY do
-		buff = _G["BuffButton"..i];
-		if buff.consolidated then
-			numBuffs = numBuffs + 1
-			if buffWidth == 0 then
-				buffWidth = buff:GetWidth()
-			end
-		end
-	end
+    for i = 1, BUFF_ACTUAL_DISPLAY do
+        buff = _G["BuffButton"..i];
+        if buff.consolidated then
+            numBuffs = numBuffs + 1
+        end
+    end
 
-	if numBuffs > 0 then
-		-- ConsolidatedBuffsTooltip:SetWidth(numBuffs * (buffWidth + 18))
-		ConsolidatedBuffsTooltip:SetWidth(numBuffs * (BUFF_BUTTON_HEIGHT + (cfg.paddingX * 2)))
-	end
+    if numBuffs > 0 then
+        ConsolidatedBuffsTooltip:SetWidth((numBuffs * BUFF_BUTTON_HEIGHT) + ((numBuffs+1) * cfg.paddingX))
+    end
 end
 hooksecurefunc("ConsolidatedBuffs_UpdateAllAnchors", MyBuffFrame_UpdateAllBuffAnchors)
 
