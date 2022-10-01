@@ -72,7 +72,14 @@ local function MyBuffFrame_UpdateAllBuffAnchors()
     end
 
     if numBuffs > 0 then
-        ConsolidatedBuffsTooltip:SetWidth((numBuffs * BUFF_BUTTON_HEIGHT) + ((numBuffs+1) * cfg.paddingX))
+        if numBuffs == 1 then
+            ConsolidatedBuffsTooltip:SetWidth(BUFF_BUTTON_HEIGHT + (cfg.paddingX * 2))
+        elseif numBuffs > CONSOLIDATED_BUFFS_PER_ROW then
+            ConsolidatedBuffsTooltip:SetWidth(CONSOLIDATED_BUFFS_PER_ROW * BUFF_BUTTON_HEIGHT)
+        else
+            -- ConsolidatedBuffsTooltip:SetWidth(numBuffs * (BUFF_BUTTON_HEIGHT + cfg.paddingX))
+            ConsolidatedBuffsTooltip:SetWidth(numBuffs * BUFF_BUTTON_HEIGHT)
+        end
     end
 end
 hooksecurefunc("ConsolidatedBuffs_UpdateAllAnchors", MyBuffFrame_UpdateAllBuffAnchors)

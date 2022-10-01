@@ -47,6 +47,9 @@ MiniMapLFGFrame.Text:SetText('Q')
 MiniMapBattlefieldFrame:ClearAllPoints()
 MiniMapBattlefieldFrame:SetPoint('BOTTOMLEFT', Minimap, 5, 5)
 MiniMapBattlefieldFrame:SetSize(14, 14)
+MiniMapBattlefieldIcon:Hide()
+MiniMapBattlefieldBorder:Hide()
+BattlegroundShine:Hide()
 
 hooksecurefunc(MiniMapBattlefieldFrame, 'Show', function()
     MiniMapBattlefieldIcon:SetTexture(nil)
@@ -90,12 +93,12 @@ MinimapZoneTextButton:UnregisterAllEvents()
 
 MiniMapTracking:Hide()
 
-	-- Hide the durability frame (the armored man)
+    -- Hide the durability frame (the armored man)
 
 -- DurabilityFrame:Hide()
 -- DurabilityFrame:UnregisterAllEvents()
 
-	-- Bigger minimap
+    -- Bigger minimap
 
 MinimapCluster:SetScale(cfg.scale)
 MinimapCluster:EnableMouse(false)
