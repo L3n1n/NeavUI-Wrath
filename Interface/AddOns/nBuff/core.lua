@@ -61,7 +61,7 @@ ConsolidatedBuffsCount:SetShadowOffset(0, 0)
 
 -- ConsolidatedBuffsTooltip:SetScale(1.2)
 
-local function MyBuffFrame_UpdateAllBuffAnchors()
+hooksecurefunc("ConsolidatedBuffs_UpdateAllAnchors", function()
     local numBuffs = 0;
 
     for i = 1, BUFF_ACTUAL_DISPLAY do
@@ -72,17 +72,17 @@ local function MyBuffFrame_UpdateAllBuffAnchors()
     end
 
     if numBuffs > 0 then
+        local x = cfg.paddingX * 2
         if numBuffs == 1 then
-            ConsolidatedBuffsTooltip:SetWidth(BUFF_BUTTON_HEIGHT + (cfg.paddingX * 2))
-        elseif numBuffs > CONSOLIDATED_BUFFS_PER_ROW then
-            ConsolidatedBuffsTooltip:SetWidth(CONSOLIDATED_BUFFS_PER_ROW * BUFF_BUTTON_HEIGHT)
+            ConsolidatedBuffsTooltip:SetWidth(BUFF_BUTTON_HEIGHT + x)
         else
-            -- ConsolidatedBuffsTooltip:SetWidth(numBuffs * (BUFF_BUTTON_HEIGHT + cfg.paddingX))
-            ConsolidatedBuffsTooltip:SetWidth(numBuffs * BUFF_BUTTON_HEIGHT)
+            if numBuffs > CONSOLIDATED_BUFFS_PER_ROW then
+                numBuffs = CONSOLIDATED_BUFFS_PER_ROW
+            end
+            ConsolidatedBuffsTooltip:SetWidth((numBuffs * BUFF_BUTTON_HEIGHT) + x)
         end
     end
-end
-hooksecurefunc("ConsolidatedBuffs_UpdateAllAnchors", MyBuffFrame_UpdateAllBuffAnchors)
+end)
 
 local function UpdateFirstButton(self)
     if (self and self:IsShown()) then
