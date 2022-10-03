@@ -2,6 +2,15 @@
 local _, nPower = ...
 local config = nPower.Config
 
+local RuneColor = {
+    [1] = {r = 0.7, g = 0.1, b = 0.1},
+    [2] = {r = 0.7, g = 0.1, b = 0.1},
+    [3] = {r = 0.4, g = 0.8, b = 0.2},
+    [4] = {r = 0.4, g = 0.8, b = 0.2},
+    [5] = {r = 0.0, g = 0.6, b = 0.8},
+    [6] = {r = 0.0, g = 0.6, b = 0.8},
+}
+
 local function GetHPPercentage()
     local currentHP = UnitHealth("player")
     local maxHP = UnitHealthMax("player")
@@ -23,6 +32,14 @@ local function CalcRuneCooldown(num)
         return "#"
     elseif not UnitIsDeadOrGhost("player") and cooldown then
         return cooldown
+    end
+end
+
+local function SetRuneColor(self, i)
+    if (self.Rune[i].type == 4) then
+        return 1, 0, 1
+    else
+        return RuneColor[i].r, RuneColor[i].g, RuneColor[i].b
     end
 end
 
@@ -145,7 +162,8 @@ local function RuneUpdate(self, elapsed)
             end
 
             self.Rune[i]:SetText(CalcRuneCooldown(i))
-            self.Rune[i]:SetTextColor(0.0, 0.6, 0.8)
+            -- self.Rune[i]:SetTextColor(0.0, 0.6, 0.8)
+            self.Rune[i]:SetTextColor(SetRuneColor(self, i))
         end
 
         self.updateTimer = 0
